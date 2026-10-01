@@ -2,11 +2,18 @@ import { useState, useCallback } from "react";
 import { SearchBar } from "@/components/search-bar";
 import { ArtworkGrid } from "@/components/artwork-grid";
 import { ArtworkDetail } from "@/components/artwork-detail";
+import { FavoritesView } from "@/components/favorites-view";
 import { Pagination } from "@/components/pagination";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useSearchArtworks } from "@/hooks/use-artworks";
+import { useFavorites } from "@/hooks/use-favorites";
 import type { Artwork } from "@/lib/api";
+import { Heart } from "lucide-react";
 
 const DEFAULT_QUERY = "impressionism";
+
+type View = "explore" | "favorites";
 
 function App() {
   const [searchQuery, setSearchQuery] = useState(DEFAULT_QUERY);
@@ -14,6 +21,10 @@ function App() {
   const [selectedArtworkId, setSelectedArtworkId] = useState<number | null>(
     null
   );
+  const [view, setView] = useState<View>("explore");
+
+  const { favoriteIds, favoriteCount, toggleFavorite, isFavorite } =
+    useFavorites();
 
   const { data, isLoading, isFetching } = useSearchArtworks(searchQuery, page);
 
@@ -43,39 +54,85 @@ function App() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {pagination
-              ? `${pagination.total.toLocaleString()} results`
-              : "Searching..."}
-          </p>
-          {isFetching && !isLoading && (
-            <p className="text-sm text-muted-foreground animate-pulse">
-              Updating...
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex gap-1 rounded-lg bg-muted p-1">
+            <Button
+              variant={view === "explore" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setView("explore")}
+            >
+              Explore
+            </Button>
+            <Button
+              variant={view === "favorites" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setView("favorites")}
+            >
+              <Heart
+                className={
+                  favoriteCount > 0 ? "fill-red-500 text-red-500" : undefined
+                }
+              />
+              Favorites
+              {favoriteCount > 0 && (
+                <Badge variant="secondary">{favoriteCount}</Badge>
+              )}
+            </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              {view === "favorites"
+                ? favoriteCount === 1
+                  ? "1 saved artwork"
+                  : `${favoriteCount} saved artworks`
+                : pagination
+                  ? `${pagination.total.toLocaleString()} results`
+                  : "Searching..."}
             </p>
-          )}
+            {view === "explore" && isFetching && !isLoading && (
+              <p className="text-sm text-muted-foreground animate-pulse">
+                Updating...
+              </p>
+            )}
+          </div>
         </div>
 
-        <ArtworkGrid
-          artworks={artworks}
-          isLoading={isLoading}
-          onArtworkClick={setSelectedArtworkId}
-        />
-
-        {pagination && (
-          <div className="mt-8">
-            <Pagination
-              currentPage={pagination.current_page}
-              totalPages={pagination.total_pages}
-              onPageChange={handlePageChange}
+        {view === "explore" ? (
+          <>
+            <ArtworkGrid
+              artworks={artworks}
+              isLoading={isLoading}
+              favoriteIds={favoriteIds}
+              onArtworkClick={setSelectedArtworkId}
+              onToggleFavorite={toggleFavorite}
             />
-          </div>
+
+            {pagination && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={pagination.current_page}
+                  totalPages={pagination.total_pages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <FavoritesView
+            favoriteIds={favoriteIds}
+            onArtworkClick={setSelectedArtworkId}
+            onToggleFavorite={toggleFavorite}
+          />
         )}
       </main>
 
       <ArtworkDetail
         artworkId={selectedArtworkId}
+        isFavorite={
+          selectedArtworkId !== null && isFavorite(selectedArtworkId)
+        }
         onClose={() => setSelectedArtworkId(null)}
+        onToggleFavorite={toggleFavorite}
       />
     </div>
   );

@@ -5,13 +5,17 @@ import { ArtworkGridSkeleton } from "@/components/artwork-grid-skeleton";
 interface ArtworkGridProps {
   artworks: Artwork[];
   isLoading: boolean;
+  favoriteIds: number[];
   onArtworkClick: (id: number) => void;
+  onToggleFavorite: (id: number) => void;
 }
 
 export function ArtworkGrid({
   artworks,
   isLoading,
+  favoriteIds,
   onArtworkClick,
+  onToggleFavorite,
 }: ArtworkGridProps) {
   if (isLoading) {
     return <ArtworkGridSkeleton />;
@@ -34,7 +38,9 @@ export function ArtworkGrid({
         <ArtworkCard
           key={artwork.id}
           artwork={artwork}
+          isFavorite={favoriteIds.includes(artwork.id)}
           onClick={onArtworkClick}
+          onToggleFavorite={onToggleFavorite}
         />
       ))}
     </div>

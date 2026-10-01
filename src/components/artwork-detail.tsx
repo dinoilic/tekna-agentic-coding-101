@@ -5,17 +5,26 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useArtworkDetail } from "@/hooks/use-artworks";
 import { getImageUrl } from "@/lib/api";
+import { Heart } from "lucide-react";
 
 interface ArtworkDetailProps {
   artworkId: number | null;
+  isFavorite: boolean;
   onClose: () => void;
+  onToggleFavorite: (id: number) => void;
 }
 
-export function ArtworkDetail({ artworkId, onClose }: ArtworkDetailProps) {
+export function ArtworkDetail({
+  artworkId,
+  isFavorite,
+  onClose,
+  onToggleFavorite,
+}: ArtworkDetailProps) {
   const { data, isLoading } = useArtworkDetail(artworkId);
   const artwork = data?.data;
 
@@ -49,13 +58,37 @@ export function ArtworkDetail({ artworkId, onClose }: ArtworkDetailProps) {
                 {artwork.artist_display}
               </DialogDescription>
 
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold leading-tight">
-                  {artwork.title}
-                </h2>
-                <p className="text-base text-muted-foreground">
-                  {artwork.artist_display}
-                </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold leading-tight">
+                    {artwork.title}
+                  </h2>
+                  <p className="text-base text-muted-foreground">
+                    {artwork.artist_display}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={
+                    isFavorite
+                      ? "Remove from favorites"
+                      : "Add to favorites"
+                  }
+                  aria-pressed={isFavorite}
+                  title={
+                    isFavorite
+                      ? "Remove from favorites"
+                      : "Add to favorites"
+                  }
+                  onClick={() => onToggleFavorite(artwork.id)}
+                >
+                  <Heart
+                    className={
+                      isFavorite ? "fill-red-500 text-red-500" : undefined
+                    }
+                  />
+                </Button>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">

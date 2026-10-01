@@ -1,12 +1,20 @@
 import { type Artwork, getImageUrl } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { Heart } from "lucide-react";
 
 interface ArtworkCardProps {
   artwork: Artwork;
+  isFavorite: boolean;
   onClick: (id: number) => void;
+  onToggleFavorite: (id: number) => void;
 }
 
-export function ArtworkCard({ artwork, onClick }: ArtworkCardProps) {
+export function ArtworkCard({
+  artwork,
+  isFavorite,
+  onClick,
+  onToggleFavorite,
+}: ArtworkCardProps) {
   const hasImage = artwork.image_id !== null;
 
   return (
@@ -27,6 +35,27 @@ export function ArtworkCard({ artwork, onClick }: ArtworkCardProps) {
             No image available
           </div>
         )}
+
+        {/* Favorite toggle at top-left */}
+        <button
+          type="button"
+          aria-label={
+            isFavorite ? "Remove from favorites" : "Add to favorites"
+          }
+          aria-pressed={isFavorite}
+          title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(artwork.id);
+          }}
+          className="absolute left-3 top-3 z-10 rounded-full bg-black/40 p-2 backdrop-blur-md transition-colors hover:bg-black/60"
+        >
+          <Heart
+            className={`h-4 w-4 ${
+              isFavorite ? "fill-red-500 text-red-500" : "text-white"
+            }`}
+          />
+        </button>
 
         {/* Badge at top */}
         <div className="absolute inset-x-0 top-0 flex justify-end p-3">

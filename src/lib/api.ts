@@ -77,6 +77,11 @@ export interface ArtworkDetailResponse {
   config: ApiConfig;
 }
 
+export interface ArtworksByIdsResponse {
+  data: Artwork[];
+  config: ApiConfig;
+}
+
 export function getImageUrl(
   imageId: string,
   width: 200 | 400 | 600 | 843 = 843
@@ -106,6 +111,20 @@ export async function getArtworkDetail(
 ): Promise<ArtworkDetailResponse> {
   const params = new URLSearchParams({ fields: DETAIL_FIELDS });
   const res = await fetch(`${API_BASE}/artworks/${id}?${params}`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function getArtworksByIds(
+  ids: number[]
+): Promise<ArtworksByIdsResponse> {
+  const params = new URLSearchParams({
+    ids: ids.join(","),
+    limit: String(Math.min(Math.max(ids.length, 1), 100)),
+    fields: SEARCH_FIELDS,
+  });
+
+  const res = await fetch(`${API_BASE}/artworks?${params}`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
