@@ -10,6 +10,7 @@ import { useSearchArtworks } from "@/hooks/use-artworks";
 import { useFavorites } from "@/hooks/use-favorites";
 import type { Artwork } from "@/lib/api";
 import { Heart } from "lucide-react";
+import { toast } from "sonner";
 
 const DEFAULT_QUERY = "impressionism";
 
@@ -41,6 +42,15 @@ function App() {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const handleToggleFavorite = useCallback(
+    (id: number) => {
+      const adding = !isFavorite(id);
+      toggleFavorite(id);
+      toast(adding ? "Added to favorites" : "Removed from favorites");
+    },
+    [isFavorite, toggleFavorite]
+  );
 
   return (
     <div className="min-h-svh bg-background">
@@ -104,7 +114,7 @@ function App() {
               isLoading={isLoading}
               favoriteIds={favoriteIds}
               onArtworkClick={setSelectedArtworkId}
-              onToggleFavorite={toggleFavorite}
+              onToggleFavorite={handleToggleFavorite}
             />
 
             {pagination && (
@@ -121,7 +131,7 @@ function App() {
           <FavoritesView
             favoriteIds={favoriteIds}
             onArtworkClick={setSelectedArtworkId}
-            onToggleFavorite={toggleFavorite}
+            onToggleFavorite={handleToggleFavorite}
           />
         )}
       </main>
@@ -132,7 +142,7 @@ function App() {
           selectedArtworkId !== null && isFavorite(selectedArtworkId)
         }
         onClose={() => setSelectedArtworkId(null)}
-        onToggleFavorite={toggleFavorite}
+        onToggleFavorite={handleToggleFavorite}
       />
     </div>
   );
