@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -5,25 +6,118 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useArtworkDetail } from "@/hooks/use-artworks";
 import { getImageUrl } from "@/lib/api";
+import { Check, Link2 } from "lucide-react";
 
 interface ArtworkDetailProps {
   artworkId: number | null;
+  invalidId?: boolean;
   onClose: () => void;
 }
 
-export function ArtworkDetail({ artworkId, onClose }: ArtworkDetailProps) {
-  const { data, isLoading } = useArtworkDetail(artworkId);
-  const artwork = data?.data;
+function buildArtworkShareUrl(id: number): string {
+  return `${window.location.origin}/artwork/${id}`;
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  // Fallback for non-secure contexts / older browsers
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+}
+
+function ShareButton({ artworkId }: { artworkId: number }) {
+  const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const timeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleShare = async () => {
+    setFailed(false);
+    try {
+      await copyTextToClipboard(buildArtworkShareUrl(artworkId));
+      setCopied(true);
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setFailed(true);
+    }
+  };
 
   return (
-    <Dialog open={artworkId !== null} onOpenChange={() => onClose()}>
+    <div className="flex flex-col items-end gap-1">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleShare}
+        aria-live="polite"
+      >
+        {copied ? <Check /> : <Link2 />}
+        {copied ? "Copied!" : "Share"}
+      </Button>
+      {failed && (
+        <p className="text-xs text-destructive">Could not copy link</p>
+      )}
+    </div>
+  );
+}
+
+export function ArtworkDetail({
+  artworkId,
+  invalidId = false,
+  onClose,
+}: ArtworkDetailProps) {
+  const { data, isLoading, isError } = useArtworkDetail(artworkId);
+  const artwork = data?.data;
+  const open = artworkId !== null || invalidId;
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <DialogContent className="max-h-[90vh] max-w-5xl overflow-hidden p-0">
-        {isLoading ? (
+        {invalidId ? (
+          <div className="p-6">
+            <DialogTitle>Invalid artwork link</DialogTitle>
+            <DialogDescription>
+              This share link doesn&apos;t point to a valid artwork.
+            </DialogDescription>
+          </div>
+        ) : isLoading ? (
           <ArtworkDetailSkeleton />
+        ) : isError ? (
+          <div className="p-6">
+            <DialogTitle>Could not load artwork</DialogTitle>
+            <DialogDescription>
+              This artwork could not be loaded. It may have been removed or
+              the link is incorrect.
+            </DialogDescription>
+          </div>
         ) : artwork ? (
           <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr]">
             {/* Left: Image */}
@@ -49,13 +143,16 @@ export function ArtworkDetail({ artworkId, onClose }: ArtworkDetailProps) {
                 {artwork.artist_display}
               </DialogDescription>
 
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold leading-tight">
-                  {artwork.title}
-                </h2>
-                <p className="text-base text-muted-foreground">
-                  {artwork.artist_display}
-                </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold leading-tight">
+                    {artwork.title}
+                  </h2>
+                  <p className="text-base text-muted-foreground">
+                    {artwork.artist_display}
+                  </p>
+                </div>
+                <ShareButton artworkId={artwork.id} />
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
