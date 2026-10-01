@@ -3,8 +3,11 @@ import { SearchBar } from "@/components/search-bar";
 import { ArtworkGrid } from "@/components/artwork-grid";
 import { ArtworkDetail } from "@/components/artwork-detail";
 import { Pagination } from "@/components/pagination";
+import { SnakeGame } from "@/components/snake-game";
+import { Button } from "@/components/ui/button";
 import { useSearchArtworks } from "@/hooks/use-artworks";
 import type { Artwork } from "@/lib/api";
+import { Gamepad2 } from "lucide-react";
 
 const DEFAULT_QUERY = "impressionism";
 
@@ -14,6 +17,7 @@ function App() {
   const [selectedArtworkId, setSelectedArtworkId] = useState<number | null>(
     null
   );
+  const [showGame, setShowGame] = useState(false);
 
   const { data, isLoading, isFetching } = useSearchArtworks(searchQuery, page);
 
@@ -38,12 +42,29 @@ function App() {
           <h1 className="shrink-0 text-xl font-bold tracking-tight">
             🎨 Art Explorer
           </h1>
-          <SearchBar onSearch={handleSearch} initialQuery={DEFAULT_QUERY} />
+          {!showGame && (
+            <SearchBar onSearch={handleSearch} initialQuery={DEFAULT_QUERY} />
+          )}
+          <Button
+            variant={showGame ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowGame((v) => !v)}
+            aria-pressed={showGame}
+          >
+            <Gamepad2 />
+            <span className="hidden sm:inline">
+              {showGame ? "Gallery" : "Snake"}
+            </span>
+          </Button>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
+        {showGame ? (
+          <SnakeGame />
+        ) : (
+          <>
+            <div className="mb-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {pagination
               ? `${pagination.total.toLocaleString()} results`
@@ -70,6 +91,8 @@ function App() {
               onPageChange={handlePageChange}
             />
           </div>
+        )}
+          </>
         )}
       </main>
 
