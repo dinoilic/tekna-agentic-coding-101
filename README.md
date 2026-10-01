@@ -69,6 +69,17 @@ http://localhost:5173
 
 Open that URL in your browser to use the app.
 
+### Artwork image proxy
+
+The Art Institute of Chicago's IIIF image service requires an
+`AIC-User-Agent` request header. Browsers cannot add custom headers to normal
+`<img>` requests, so the Vite development server exposes a local
+`/aic-iiif` proxy that adds the header before forwarding images to the museum.
+
+Run the app with `npm run dev` so artwork images use that proxy. A hosted
+static build would need an equivalent server-side or edge proxy; adding the
+header from browser code is not a supported replacement.
+
 ## Project structure
 
 ```text

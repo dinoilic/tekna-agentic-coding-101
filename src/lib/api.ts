@@ -1,5 +1,5 @@
 const API_BASE = "https://api.artic.edu/api/v1";
-const IIIF_BASE = "https://www.artic.edu/iiif/2";
+const IIIF_PROXY_BASE = "/aic-iiif";
 
 // Fields we request from the API to keep payloads small
 const SEARCH_FIELDS = [
@@ -33,26 +33,31 @@ export interface ArtworkThumbnail {
   lqip: string;
   width: number;
   height: number;
-  alt_text: string;
+  alt_text: string | null;
 }
 
 export interface Artwork {
   id: number;
   title: string;
-  artist_display: string;
-  date_display: string;
+  artist_display: string | null;
+  date_display: string | null;
   image_id: string | null;
   thumbnail: ArtworkThumbnail | null;
-  artwork_type_title: string;
-  department_title: string;
+  artwork_type_title: string | null;
+  department_title: string | null;
 }
 
 export interface ArtworkDetail extends Artwork {
-  medium_display: string;
-  dimensions: string;
-  credit_line: string;
-  place_of_origin: string;
+  medium_display: string | null;
+  dimensions: string | null;
+  credit_line: string | null;
+  place_of_origin: string | null;
   description: string | null;
+}
+
+export interface ApiConfig {
+  iiif_url: string;
+  website_url: string;
 }
 
 export interface ArtworkSearchResponse {
@@ -64,17 +69,19 @@ export interface ArtworkSearchResponse {
     current_page: number;
   };
   data: Artwork[];
+  config: ApiConfig;
 }
 
 export interface ArtworkDetailResponse {
   data: ArtworkDetail;
+  config: ApiConfig;
 }
 
 export function getImageUrl(
   imageId: string,
   width: 200 | 400 | 600 | 843 = 843
 ): string {
-  return `${IIIF_BASE}/${imageId}/full/${width},/0/default.jpg`;
+  return `${IIIF_PROXY_BASE}/${imageId}/full/${width},/0/default.jpg`;
 }
 
 export async function searchArtworks(
