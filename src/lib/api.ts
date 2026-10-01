@@ -1,5 +1,24 @@
 const API_BASE = "https://api.artic.edu/api/v1";
-const IIIF_BASE = "https://www.artic.edu/iiif/2";
+
+// artic.edu's Cloudflare protection rejects image requests whose Referer is
+// missing or points at localhost / 127.0.0.1, so requesting the IIIF URLs
+// directly from the browser fails during local development (HTTP 403,
+// surfaced as ERR_BLOCKED_BY_ORB). The dev server (see vite.config.ts)
+// proxies same-origin `/iiif` requests to artic.edu with an allowed Referer,
+// so use the proxy when the app itself runs on localhost.
+const IIIF_DIRECT_BASE = "https://www.artic.edu/iiif/2";
+const IIIF_PROXY_BASE = "/iiif/2";
+
+function getIiifBase(): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1" || host === "[::1]") {
+      return IIIF_PROXY_BASE;
+    }
+    return IIIF_DIRECT_BASE;
+  }
+  return import.meta.env.DEV ? IIIF_PROXY_BASE : IIIF_DIRECT_BASE;
+}
 
 // Fields we request from the API to keep payloads small
 const SEARCH_FIELDS = [
@@ -74,7 +93,7 @@ export function getImageUrl(
   imageId: string,
   width: 200 | 400 | 600 | 843 = 843
 ): string {
-  return `${IIIF_BASE}/${imageId}/full/${width},/0/default.jpg`;
+  return `${getIiifBase()}/${imageId}/full/${width},/0/default.jpg`;
 }
 
 export async function searchArtworks(
